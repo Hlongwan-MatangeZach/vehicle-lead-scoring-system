@@ -5,12 +5,9 @@ Handles reading raw CSV files, type casting, and basic data cleaning.
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import sys
+import logging
 
-# Ensure project root is in sys.path when running script directly
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+logger = logging.getLogger(__name__)
 
 from src.config import (
     TRAIN_FILE,
@@ -84,54 +81,55 @@ def get_feature_columns(df: pd.DataFrame, is_train: bool = True) -> list:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     pd.set_option("display.max_columns", None)
     pd.set_option("display.width", 140)
 
     # ==================================================================
     # 1. TRAIN DATA
     # ==================================================================
-    print("=" * 70)
-    print("  LOADING TRAINING DATA")
-    print("=" * 70)
+    logger.info("=" * 70)
+    logger.info("  LOADING TRAINING DATA")
+    logger.info("=" * 70)
     train_df = load_train_data()
-    print(f"\n  Shape : {train_df.shape[0]:,} rows x {train_df.shape[1]} columns")
-    print(f"  Date range : {train_df['date_created'].min()} -> {train_df['date_created'].max()}")
+    logger.info(f"\n  Shape : {train_df.shape[0]:,} rows x {train_df.shape[1]} columns")
+    logger.info(f"  Date range : {train_df['date_created'].min()} -> {train_df['date_created'].max()}")
 
-    print("\n  --- Target distribution (conversion rates) ---")
+    logger.info("\n  --- Target distribution (conversion rates) ---")
     for col in TARGET_COLUMNS:
         if col in train_df.columns:
             pos = train_df[col].sum()
             rate = train_df[col].mean() * 100
-            print(f"    {col:12s}: {pos:6,} / {len(train_df):,}  ({rate:.2f}%)")
+            logger.info(f"    {col:12s}: {pos:6,} / {len(train_df):,}  ({rate:.2f}%)")
 
     # ==================================================================
     # 2. TEST DATA
     # ==================================================================
-    print("\n" + "=" * 70)
-    print("  LOADING TEST DATA")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  LOADING TEST DATA")
+    logger.info("=" * 70)
     test_df = load_test_data()
-    print(f"\n  Shape : {test_df.shape[0]:,} rows x {test_df.shape[1]} columns")
+    logger.info(f"\n  Shape : {test_df.shape[0]:,} rows x {test_df.shape[1]} columns")
 
     train_only = set(train_df.columns) - set(test_df.columns)
-    print(f"  In train but NOT test (targets/leakage): {sorted(train_only)}")
+    logger.info(f"  In train but NOT test (targets/leakage): {sorted(train_only)}")
 
     # ==================================================================
     # 3. DEAL CALL DATA
     # ==================================================================
-    print("\n" + "=" * 70)
-    print("  LOADING DEAL CALL DATA")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  LOADING DEAL CALL DATA")
+    logger.info("=" * 70)
     calls_df = load_deal_calls()
-    print(f"\n  Shape : {calls_df.shape[0]:,} rows x {calls_df.shape[1]} columns")
-    print(f"  Unique deal_refs: {calls_df['deal_ref'].nunique():,}")
+    logger.info(f"\n  Shape : {calls_df.shape[0]:,} rows x {calls_df.shape[1]} columns")
+    logger.info(f"  Unique deal_refs: {calls_df['deal_ref'].nunique():,}")
 
     overlap = set(train_df["deal_ref"]) & set(calls_df["deal_ref"])
-    print(f"  deal_refs overlapping with train: {len(overlap):,} / {train_df['deal_ref'].nunique():,}")
+    logger.info(f"  deal_refs overlapping with train: {len(overlap):,} / {train_df['deal_ref'].nunique():,}")
 
     # ==================================================================
     # SUMMARY
     # ==================================================================
-    print("\n" + "=" * 70)
-    print("  DATA LOADING COMPLETE [OK]")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info("  DATA LOADING COMPLETE [OK]")
+    logger.info("=" * 70)
